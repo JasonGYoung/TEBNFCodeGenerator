@@ -1,0 +1,39 @@
+INPUT @Console_In = CONSOLE
+  promptNum = INT_64 = "Number: ";
+  promptOp = INT_8 = "Op: ";
+END
+
+OUTPUT @Console_Out = CONSOLE END
+
+GRAMMAR @Number
+  num = INT_64;
+  $result = INT_64;
+END
+
+GRAMMAR @addOp op = '+'; END
+GRAMMAR @subOp op = '-'; END
+GRAMMAR @mulOp op = '*'; END
+GRAMMAR @divOp op = '/'; END
+GRAMMAR @eqOp op = '='; END
+
+ACTIONS @Assign @Number.$result = @Number.num; END;
+ACTIONS @AddAssign @Number.$result += @Number.num; END
+ACTIONS @SubAssign @Number.$result -= @Number.num; END
+ACTIONS @MulAssign @Number.$result *= @Number.num; END
+ACTIONS @DivAssign @Number.$result /= @Number.num; END
+
+STATES @Calculator
+#-------------------------------------------------------------------------------------------------------------
+# State       | Input or Condition | Input Method          | Next State  | Output or Action  | Output Method |
+#-------------------------------------------------------------------------------------------------------------
+  Init        | @Number            | @Console_In.promptNum | StateNum    | @Assign           |               ;
+  StateNum    | @Number            | @Console_In.promptNum | StateOp     |                   |               ;
+  StateOp     | @addOp             | @Console_In.promptOp  | Print       | @AddAssign        |               ;
+              | @subOp             | @Console_In.promptOp  | Print       | @SubAssign        |               ;
+	          | @mulOp             | @Console_In.promptOp  | Print       | @MulAssign        |               ;
+	          | @divOp             | @Console_In.promptOp  | Print       | @DivAssign        |               ;
+			  | @eqOp              | @Console_In.promptOp  | Done        | @Number.$result   | @Console_Out  ;
+			  |                    |                       | Done        |                   |               ;
+  Print       |                    |                       | StateNum    | @Number.$result   | @Console_Out  ;
+  Done        |                    |                       |             |                   |               ;
+END

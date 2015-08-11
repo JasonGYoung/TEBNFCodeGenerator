@@ -1,0 +1,30 @@
+
+
+
+GRAMMAR @use00a
+  cetag = 'U','S','E','0','0','A';
+  cel = '0','0','1','0','7';
+  angle_to_north = UNSIGNED FLOAT_STR_24;
+  mean_gsd = UNSIGNED FLOAT_STR_40;
+  blank = BYTE;
+  dynamic_range = UNSIGNED INT_STR_40;
+  reserved1 = BYTE{3};
+  reserved2 = BYTE;
+  reserved3 = BYTE{3};
+  obl_ang = UNSIGNED FLOAT_STR_40;
+  roll_ang = BYTE{6};
+  reserved4 = BYTE{12};
+  reserved5 = BYTE{15};
+  reserved6 = BYTE{4};
+  reserved7 = BYTE;
+  reserved8 = BYTE{3};
+  reserved9 = BYTE;
+  n_ref = UNSIGNED INT_16;
+  rev_num = UNSIGNED INT_STR_40;
+  n_seg = UNSIGNED INT_STR_24
+  max_lp_seg = UNSIGNED INT_STR_48;
+  reserved10 = BYTE{6};
+  reserved11 = BYTE{6};
+  sun_el = UNSIGNED FLOAT_STR_40;
+  sun_az = UNSIGNED FLOAT_STR_40;
+END

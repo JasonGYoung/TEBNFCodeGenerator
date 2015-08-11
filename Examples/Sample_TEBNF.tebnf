@@ -1,0 +1,63 @@
+INPUT @UDP_In_1 = UDP_IP END # UDP/IP input socket.
+OUTPUT @UDP_Out_1 AS @UDP_In_1 END # Receive and send over same socket.
+OUTPUT @File_Out = FILE END
+#OUTPUT @DB = MYSQL END
+
+GRAMMAR @packet
+  ##
+  testNoMin = BYTE {,14};
+  testNoMax = BYTE{42,};
+  ##
+  testUnbounded = BYTE{,};
+  ##
+  test = UNSIGNED INT_64{56,75};
+  test2 = 45765;
+  newTest = 0xCC;
+  ##
+  # Describe the packet to receive.
+  syncWord = 0x0A, 0x0B, 0x0C | 0xCE, 0x0D;
+  sourcePort = UNSIGNED INT_16;
+  destinationPort = UNSIGNED INT_16 ;
+  sequenceNumber = UNSIGNED INT_32 ;
+  payloadSize = UNSIGNED INT_64 ;
+  payload = BYTE{42,payloadSize} ;
+  fileSize = UNSIGNED INT_64;
+  #testbits = BIT{33};
+  # In order to resolve, we make sure all types concatenated after syncWord resolve to the same type as syncWord. 
+  header = syncWord,
+           "holy crud",
+		   fileSize,
+		   0xBAADBEEFABC,
+           sourcePort,
+           destinationPort,
+           sequenceNumber,
+           payloadSize ;
+  pkt = header, payload ;
+  # Every time data matching this grammar is received, $payloads will be calculated.
+  $payloads += payloadSize ;
+ # $file += payload;
+END
+
+GRAMMAR @packet2 AS @packet END
+GRAMMAR @packet3 AS @packet END
+
+GRAMMAR @ack
+  # The reply to send when a packet is received successfully.
+  packetReply = "ACK ", @packet.sequenceNumber, "oh crap" ;
+END
+
+ACTIONS @left (val_1, val_2)
+  @packet.testUnbounded[$i] = val_1 ;
+  $myVar = ( 1 + 2 ) * ( 3 / @packet.fileSize ) - ( 5 + 6 );
+  i-- ;
+END
+
+STATES @File_Transfer
+#-----------------------------------------------------------------------------------------------------
+# State  | Input or Condition                    | Input Method | Next State | Output or Action      | Output Method |
+#-----------------------------------------------------------------------------------------------------
+  Start  | @packet                               | @UDP_In_1    | Check      | @ack.packetReply      | @UDP_Out_1    ;
+  Check  | @packet.$payloads == @packet.fileSize |              | Reset      | @packet.$payloads     | @File_Out     ;
+  Reset  |                                       |              | Start      | @packet.$payloads = 0 |               ;
+END
+

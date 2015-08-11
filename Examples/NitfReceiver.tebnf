@@ -1,0 +1,37 @@
+INPUT @UDP_In = UDP_IP END # UDP/IP input socket.
+OUTPUT @UDP_Out AS @UDP_In END
+OUTPUT @File_Out = FILE END
+OUTPUT @Console_Out = CONSOLE END
+
+GRAMMAR @Nitf
+  # Describe the file to receive.
+  syncWord = 'N', 'I', 'T', 'F', '0', '2', '.', '1', '0';
+  skip1 = BYTE{333}; #FL offset is 342.
+  fileLength = UNSIGNED INT_STR_96; #NITF file length field is 12 bytes.
+  skip2 = BYTE{,};
+  header = syncWord, skip1, fileLength;
+  file = header, skip2;
+  = fileLength; #Overall size of this file.
+END
+
+GRAMMAR @Send
+  startSend = "send";
+END
+
+GRAMMAR @Status
+  recvMsg = "All files received from server, exiting.";
+END
+
+GRAMMAR @Done
+  done = "done";
+END
+
+STATES @File_Transfer
+#------------------------------------------------------------------------------------------------------
+# State  | Input or Condition     | Input Method | Next State | Output or Action      | Output Method |
+#------------------------------------------------------------------------------------------------------
+  Init   |                        |              | Start      | @Send.startSend       | @UDP_Out      ;
+  Start  | @Nitf                  | @UDP_In      | Init       | @Nitf.file            | @File_Out     ;
+         | @Done                  | @UDP_In      | Quit       | @Status.recvMsg       | @Console_Out  ;
+  Quit   |                        |              |            |                       |               ;
+END

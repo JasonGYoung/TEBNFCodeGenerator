@@ -1,0 +1,59 @@
+# TEBNF implementation of UTM(4,6) (a 4-state 6-symbol universal Turing machine) presented by
+# Y. Rogozhin in "Small universal Turing machines", 1996.
+
+INPUT @Tape_In = FILE END;
+OUTPUT @Tape_Out AS @Tape_In END;
+
+GRAMMAR @tape
+  elements = BYTE{,} ; # Defines an array with no min or max number of elements.
+  $i = 0 ;             # Index value used for moving left or right on the tape.
+END
+
+ACTIONS @right (val)
+  @tape.elements[@tape.$i] = val;
+  @tape.$i++;
+END
+
+ACTIONS @left (val)
+  @tape.elements[@tape.$i] = val;
+  @tape.$i-- ;
+END
+
+# Read the tape and run the universal Turing machine. Moving right and left on the tape (represented
+# by the @tape.elements array) is represented by incrementing and decrementing $index, respectively.
+#
+# Symbols: 0 (blank), 1, b, x, y, c
+# States:  q1, q2, q3, q4
+#
+STATES @UTM_4_6
+#-------------------------------------------------------------------------------------------
+# State  | Input or Condition              | Input    | Next  | Output or      | Output    |
+#        |                                 | Method   | State | Action         | Method    |
+#-------------------------------------------------------------------------------------------
+  begin  | @tape                           | @Tape_In | q1    |                |           ; # Read contents of file (tape) into @tape.elements
+  q1     | @tape.elements[@tape.$i] == '1' |          | q1    | @left('1')     |           ;
+         | @tape.elements[@tape.$i] == 'b' |          | q1    | @right('0')    |           ;
+         | @tape.elements[@tape.$i] == 'y' |          | q1    | @left('b')     |           ;
+         | @tape.elements[@tape.$i] == 'x' |          | q1    | @right('0')    |           ;
+         | @tape.elements[@tape.$i] == '0' |          | q1    | @left('x')     |           ;
+         | @tape.elements[@tape.$i] == 'c' |          | q4    | @left('0')     |           ; # q1C0Rq4            
+  q2     | @tape.elements[@tape.$i] == '1' |          | q2    | @right('0')    |           ;
+         | @tape.elements[@tape.$i] == 'b' |          | q3    | @left('y')     |           ; # q2byLq3
+         | @tape.elements[@tape.$i] == 'y' |          | q2    | @left('x')     |           ;
+         | @tape.elements[@tape.$i] == 'x' |          | q2    | @left('y')     |           ;
+         | @tape.elements[@tape.$i] == '0' |          | q2    | @left('1')     |           ;
+         | @tape.elements[@tape.$i] == 'c' |          | q2    | @right('b')    |           ;
+  q3     | @tape.elements[@tape.$i] == '1' |          | q3    | @right('1')    |           ; # q311Rq3
+         | @tape.elements[@tape.$i] == 'b' |          | q4    | @right('x')    |           ;
+         | @tape.elements[@tape.$i] == 'y' |          | q3    | @right('b')    |           ; # q3ybRq3
+         | @tape.elements[@tape.$i] == 'x' |          |       | @tape          | @Tape_Out ; # q3x— (Halt)
+         | @tape.elements[@tape.$i] == '0' |          | q1    | @right('c')    |           ;
+         | @tape.elements[@tape.$i] == 'c' |          | q1    | @right('1')    |           ; # q3c1Rq1
+  q4     | @tape.elements[@tape.$i] == '1' |          | q4    | @right('0')    |           ;
+         | @tape.elements[@tape.$i] == 'b' |          | q2    | @left('c')     |           ;
+         | @tape.elements[@tape.$i] == 'y' |          | q4    | @right('x')    |           ;
+         | @tape.elements[@tape.$i] == 'x' |          |       | @tape          | @Tape_Out ; # q4x— (Halt)
+         | @tape.elements[@tape.$i] == '0' |          | q2    | @left('c')     |           ; # q40cLq2
+         | @tape.elements[@tape.$i] == 'c' |          | q4    | @right('b')    |           ;
+END
+
